@@ -149,10 +149,10 @@ channelRanges = {'ch1': 10, 'ch2': 10, 'ch3': 10, 'ch4': 10}
 amplifierGains = {'ch1': 10**6, 'ch2': 10**6, 'ch3': 1, 'ch4': 1}
 
         
-dataFiles = glob.glob("../20171221/*_5_*")
+dataFiles = glob.glob("../20171222/*_5_*")
 print(dataFiles)
         
 an = KAbsProfiles(dataFiles[1], samplingRate, bits, channelLayout, channelRanges, amplifierGains)
 
 #an.PlotChannelData(4)
-print(an.TriggerAbsorption(2))
+print(an.TriggerAbsorption(5,1,True))
