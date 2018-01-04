@@ -84,6 +84,31 @@ class KAbsProfiles:
 
         return np.array(maxima), np.array(minima)
 
+    def TriggerAbsorption(self, N, channel=0, plot=False):
+        """ Trigger the Nth absorption profile and plot the data if wanted. """
+
+        maximaLocations, minimaLocations = self.PeakDet(self.channel4, 0.1)
+        absStart = minimaLocations[N-1]
+        absStop = maximaLocations[N]
+
+        if channel == 1:
+            data = self.channel1[absStart:absStop]
+        elif channel == 2:
+            data = self.channel2[absStart:absStop]
+        elif channel == 3:
+            data = self.channel3[absStart:absStop]
+        elif channel == 4:
+            data = self.channel4[absStart:absStop]
+        else:
+            pass
+
+        if plot == True:
+            xVals = np.linspace(0,1,data.size)
+            plt.plot(xVals, data)
+            plt.show()
+
+        return [absStart, absStop]
+    
     def PlotChannelData(self, channel):
 
         if channel == 1:
@@ -127,6 +152,7 @@ amplifierGains = {'ch1': 10**6, 'ch2': 10**6, 'ch3': 1, 'ch4': 1}
 dataFiles = glob.glob("../20171221/*_5_*")
 print(dataFiles)
         
-an = KAbsProfiles(dataFiles[0], samplingRate, bits, channelLayout, channelRanges, amplifierGains)
+an = KAbsProfiles(dataFiles[1], samplingRate, bits, channelLayout, channelRanges, amplifierGains)
 
-an.PlotChannelData(4)
+#an.PlotChannelData(4)
+print(an.TriggerAbsorption(2))
