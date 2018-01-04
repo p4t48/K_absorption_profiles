@@ -2,24 +2,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
-dataFiles = glob.glob("20171222/*_5_*")
+
+class KAbsProfiles:
+
+    def __init__(self, dataFile, samplingRate, bits, channelLayout, channelRanges, amplifierGains):
+        self.dataFile = dataFile
+        self.samplingRate = samplingRate
+        self.amplifierGains = amplifierGains
+
+        # Depending on the data format, get signal in volts
+        f = open("%s" % self.dataFile, "r")
+        if bits == 16:
+            self.data = np.fromfile(f, dtype=np.int16)
+            channel1Norm = channelRanges['ch1'] / 2**15 # To get voltages from 16 bit integer
+            channel2Norm = channelRanges['ch2'] / 2**15 
+            channel3Norm = channelRanges['ch3'] / 2**15 
+            channel4Norm = channelRanges['ch4'] / 2**15 
+        elif bits == 32:
+            self.data = np.fromfile(f, dtype=np.int32)
+            channel1Norm = channelRanges['ch1'] / 2**31 # To get voltages from 18 bit integer
+            channel2Norm = channelRanges['ch2'] / 2**31 
+            channel3Norm = channelRanges['ch3'] / 2**31 
+            channel4Norm = channelRanges['ch4'] / 2**31             
+        else:
+            print("Needs to be either 16 or 32 bit!")
+
+        self.channel1 = self.data[channelLayout['ch1']-1::4] * channel1Norm            
+        self.channel2 = self.data[channelLayout['ch2']-1::4] * channel2Norm
+        self.channel3 = self.data[channelLayout['ch3']-1::4] * channel3Norm
+        self.channel4 = self.data[channelLayout['ch4']-1::4] * channel4Norm
+
+
+dataFiles = glob.glob("../20171221/*_5_*")
 print(dataFiles)
-
-f = open("%s" % dataFiles[0], "r")
-f2 = open("%s" % dataFiles[1], "r")
-data = np.fromfile(f, dtype=np.int16)
-data2 = np.fromfile(f2, dtype=np.int16)
-spectrum = data[1::4]
-spectrum2 = data2[0::4]
-trigger = data[3::4]
-trigger2 = data2[3::4]
-xVals = np.linspace(0,1,len(spectrum))
-xVals2 = np.linspace(0,1,len(spectrum2))
-
-print(data)
-
-plt.plot(xVals, spectrum)
-plt.plot(xVals, trigger)
-plt.plot(xVals2, spectrum2)
-plt.plot(xVals2, trigger2)
-plt.show()
+        
