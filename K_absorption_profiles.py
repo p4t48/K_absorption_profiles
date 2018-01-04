@@ -32,7 +32,37 @@ class KAbsProfiles:
         self.channel3 = self.data[channelLayout['ch3']-1::4] * channel3Norm
         self.channel4 = self.data[channelLayout['ch4']-1::4] * channel4Norm
 
+    def PlotChannelData(self, channel):
 
+        if channel == 1:
+            data =  self.channel1
+        elif channel == 2:
+            data = self.channel2
+        elif channel == 3:
+            data = self.channel3
+        elif channel == 4:
+            data = self.channel4
+
+        xVals = np.linspace(0,1,len(data))
+
+        plt.plot(xVals, data)
+        plt.show()
+            
+#
+# Analyse data
+#
+
+# Info about input data file
+samplingRate = 2*10**4
+bits = 16
+channelLayout = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+channelRanges = {'ch1': 10, 'ch2': 10, 'ch3': 10, 'ch4': 10}
+amplifierGains = {'ch1': 10**6, 'ch2': 10**6, 'ch3': 1, 'ch4': 1}
+
+        
 dataFiles = glob.glob("../20171221/*_5_*")
 print(dataFiles)
         
+an = KAbsProfiles(dataFiles[0], samplingRate, bits, channelLayout, channelRanges, amplifierGains)
+
+an.PlotChannelData(4)
