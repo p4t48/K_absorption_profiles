@@ -39,7 +39,7 @@ class KAbsProfiles:
 
     def PeakDet(self, data, delta, indices = None):
         """ Function adapted from https://gist.github.com/endolith/250860.
-            Returns the maxima and minima with gap delta of an array."""
+            Returns the maxima and minima with gap delta of an array. """
         
         maxima, minima = [], []
         
@@ -111,6 +111,7 @@ class KAbsProfiles:
         return [absStart, absStop]
 
     def AbsorptionSignal(self, N, channel=0, plot=False):
+        """ Return the data of the Nth absorption signal without mode-hop jumps. """
 
         boundaries = self.TriggerAbsorption(N, channel, plot)
         absStart = boundaries[0]
@@ -131,8 +132,8 @@ class KAbsProfiles:
         jumps = sd.mz_fwt(data, n=2)
         jumps /= np.abs(jumps).max()
         jumpLocations = np.where(jumps >= 1e-4)[0] # 1e-4 seems to properly discriminate mode-hops
-        print(jumpLocations)
-        # Cutting data from the first mode-hop on
+
+        # Cutting data from the last mode-hop on
         dataCut = data[jumpLocations.max()+100:]
         maximaLocations, minimaLocations = self.PeakDet(data, 0.1)
         
@@ -144,7 +145,6 @@ class KAbsProfiles:
             xValsMinima = np.take(xVals, minimaLocations)            
             xValsJumps = np.take(xVals, jumpLocations)
             jumpVals = np.take(data, jumpLocations)
-            print(jumpVals)
             minVals = np.take(data, minimaLocations)
             plt.plot(xVals, data, label='original data')
             plt.plot(xVals, jumps, label='detected jumps')
@@ -157,6 +157,7 @@ class KAbsProfiles:
         return dataCut
     
     def PlotChannelData(self, channel):
+        """ Simple method to plot the data in channel x. """
 
         if channel == 1:
             data =  self.channel1
@@ -167,19 +168,6 @@ class KAbsProfiles:
         elif channel == 4:
             data = self.channel4
 
-        xVals = np.linspace(0,1,len(data))
-        maximaLocations, minimaLocations = self.PeakDet(data, 0.1)
-        print(maximaLocations)
-        print(minimaLocations)
-        
-        xValsMax = np.take(xVals, maximaLocations)
-        xValsMin = np.take(xVals, minimaLocations)
-        maxima = np.take(data, maximaLocations)
-        minima = np.take(data, minimaLocations)
-        print(maxima.size)
-        print(xValsMax.size)
-                
+        xVals = np.linspace(0,1,len(data))                
         plt.plot(xVals, data)
-        plt.plot(xValsMax, maxima, 'ro')
-        plt.plot(xValsMin, minima, 'ko')
         plt.show()
