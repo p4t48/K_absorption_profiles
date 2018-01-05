@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import glob
 from scipy.signal import find_peaks_cwt
 import sys
+import step_detect as sd
 
 
 class KAbsProfiles:
@@ -108,6 +109,52 @@ class KAbsProfiles:
             plt.show()
 
         return [absStart, absStop]
+
+    def AbsorptionSignal(self, N, channel=0, plot=False):
+
+        boundaries = self.TriggerAbsorption(N, channel, plot)
+        absStart = boundaries[0]
+        absStop = boundaries[1]
+
+        if channel == 1:
+            data = self.channel1[absStart:absStop]
+        elif channel == 2:
+            data = self.channel2[absStart:absStop]
+        elif channel == 3:
+            data = self.channel3[absStart:absStop]
+        elif channel == 4:
+            data = self.channel4[absStart:absStop]
+        else:
+            pass
+
+        # Finding where to cut the data because of mode-hops or other
+        jumps = sd.mz_fwt(data, n=2)
+        jumps /= np.abs(jumps).max()
+        jumpLocations = np.where(jumps >= 1e-4)[0] # 1e-4 seems to properly discriminate mode-hops
+        print(jumpLocations)
+        # Cutting data from the first mode-hop on
+        dataCut = data[jumpLocations.max()+100:]
+        maximaLocations, minimaLocations = self.PeakDet(data, 0.1)
+        
+        if plot == True:
+            
+            # Plotting all relevant points and the data
+            xVals = np.linspace(0,1,data.size)
+            xValsCut = xVals[jumpLocations.max()+100:]
+            xValsMinima = np.take(xVals, minimaLocations)            
+            xValsJumps = np.take(xVals, jumpLocations)
+            jumpVals = np.take(data, jumpLocations)
+            print(jumpVals)
+            minVals = np.take(data, minimaLocations)
+            plt.plot(xVals, data, label='original data')
+            plt.plot(xVals, jumps, label='detected jumps')
+            plt.plot(xValsCut, dataCut, 'k', label='cut data')
+            plt.plot(xValsJumps, jumpVals, 'ro', label='jump locations')
+            plt.plot(xValsMinima, minVals, 'ks', label='minima locations')
+            plt.legend()
+            plt.show()
+
+        return dataCut
     
     def PlotChannelData(self, channel):
 
@@ -136,23 +183,3 @@ class KAbsProfiles:
         plt.plot(xValsMax, maxima, 'ro')
         plt.plot(xValsMin, minima, 'ko')
         plt.show()
-
-#
-# Analyse data
-#
-
-# Info about input data file
-samplingRate = 2*10**4
-bits = 16
-channelLayout = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
-channelRanges = {'ch1': 10, 'ch2': 10, 'ch3': 10, 'ch4': 10}
-amplifierGains = {'ch1': 10**6, 'ch2': 10**6, 'ch3': 1, 'ch4': 1}
-
-        
-dataFiles = glob.glob("../20171222/*_5_*")
-print(dataFiles)
-        
-an = KAbsProfiles(dataFiles[1], samplingRate, bits, channelLayout, channelRanges, amplifierGains)
-
-#an.PlotChannelData(4)
-print(an.TriggerAbsorption(5,1,True))
