@@ -4,6 +4,7 @@ import glob
 from scipy.signal import find_peaks_cwt
 import sys
 import step_detect as sd
+import lmfit as lf
 
 
 class KAbsProfiles:
@@ -184,7 +185,7 @@ class KAbsProfiles:
         minimaValues = np.take(self.absorptionProfile, minimaLocations)
 
         gaussianMean = minimaLocations[minimaValues.argmin()]
-        gaussianStd = self.absorptionProfile.size/3
+        gaussianStd = self.absorptionProfile.size/6
         laserPower = np.mean(self.absorptionProfile)
         gaussianAmplitude = np.abs(laserPower - np.take(self.absorptionProfile, gaussianMean))
         scanSlope = (self.absorptionProfile[-1] - self.absorptionProfile[0]) / self.absorptionProfile.size
@@ -192,3 +193,41 @@ class KAbsProfiles:
         fitGuesses = {"mean": gaussianMean, "std": gaussianStd, "amplitude": gaussianAmplitude, "DC": laserPower, "scan": scanSlope}
 
         return fitGuesses
+
+    def FitAbsorptionProfile(self, N, channel):
+
+        initialGuess = self.AbsorptionParameters(N, channel)
+
+        gauss = lf.models.GaussianModel()
+        lin = lf.models.LinearModel()
+        
+        pars = gauss.make_params()
+        pars['center'].set(initialGuess['mean'])
+        pars['sigma'].set(initialGuess['std'])
+        pars['amplitude'].set(-initialGuess['amplitude']*initialGuess['std'])
+
+        pars.update(lin.make_params())
+        pars['slope'].set(initialGuess['scan'])
+        pars['intercept'].set(initialGuess['DC'])
+
+        mod = lin + gauss
+        x = np.arange(self.absorptionProfile.size)
+        y = self.absorptionProfile
+
+        init = mod.eval(pars, x=x)
+        out = mod.fit(y, pars, x=x, method='powell')
+        comps = out.eval_components(x=x)
+
+        print(out.fit_report(min_correl=0.5))
+
+        f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False, gridspec_kw={'hspace':0})                        
+        ax1.set_ylabel("Voltage, V (V)", size=20)
+        ax2.set_ylabel("Residual (V)")
+        ax1.plot(x, init, 'k--', label="Initial guess")
+        ax1.plot(x, y, 'bo', linestyle='-', markersize=2, label="Absorption profile")
+        ax1.plot(x, out.best_fit, 'r-', label="Fit of the absorption")
+        ax2.plot(x, out.residual, 'bo', linestyle='-', markersize=2)
+        ax1.legend(loc=4)
+        plt.xlabel("Sample", size=26)
+        plt.tight_layout()
+        plt.show()
