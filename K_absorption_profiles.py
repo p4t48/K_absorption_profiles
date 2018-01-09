@@ -194,10 +194,11 @@ class KAbsProfiles:
 
         return fitGuesses
 
-    def FitAbsorptionProfile(self, N, channel):
+    def FitAbsorptionProfile(self, N, channel, plot=0):
+        """ Fit the Potassium absorption spectrum which was pre-cut. """
 
+        # Will fit gaussian with linear background to the data
         initialGuess = self.AbsorptionParameters(N, channel)
-
         gauss = lf.models.GaussianModel()
         lin = lf.models.LinearModel()
         
@@ -205,7 +206,6 @@ class KAbsProfiles:
         pars['center'].set(initialGuess['mean'])
         pars['sigma'].set(initialGuess['std'])
         pars['amplitude'].set(-initialGuess['amplitude']*initialGuess['std'])
-
         pars.update(lin.make_params())
         pars['slope'].set(initialGuess['scan'])
         pars['intercept'].set(initialGuess['DC'])
@@ -214,20 +214,30 @@ class KAbsProfiles:
         x = np.arange(self.absorptionProfile.size)
         y = self.absorptionProfile
 
+        # Fit data with the standard least squares
         init = mod.eval(pars, x=x)
-        out = mod.fit(y, pars, x=x, method='powell')
+        out = mod.fit(y, pars, x=x)
         comps = out.eval_components(x=x)
 
-        print(out.fit_report(min_correl=0.5))
+        if plot == 1:
+            print(out.fit_report(min_correl=0.5))
+            f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False, gridspec_kw={'hspace':0})                     
+            ax1.set_ylabel("Voltage, V (V)", size=20)
+            ax2.set_ylabel("Residual (V)")
+            ax1.plot(x, init, 'k--', label="Initial guess")
+            ax1.plot(x, y, 'bo', linestyle='-', markersize=2, label="Absorption profile")
+            ax1.plot(x, out.best_fit, 'r-', label="Fit of the absorption")
+            ax2.plot(x, out.residual, 'bo', linestyle='-', markersize=2)
+            ax1.legend(loc=4)
+            plt.xlabel("Sample", size=26)
+            plt.tight_layout()
+            plt.show()
 
-        f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False, gridspec_kw={'hspace':0})                        
-        ax1.set_ylabel("Voltage, V (V)", size=20)
-        ax2.set_ylabel("Residual (V)")
-        ax1.plot(x, init, 'k--', label="Initial guess")
-        ax1.plot(x, y, 'bo', linestyle='-', markersize=2, label="Absorption profile")
-        ax1.plot(x, out.best_fit, 'r-', label="Fit of the absorption")
-        ax2.plot(x, out.residual, 'bo', linestyle='-', markersize=2)
-        ax1.legend(loc=4)
-        plt.xlabel("Sample", size=26)
-        plt.tight_layout()
-        plt.show()
+        else:
+            pass
+
+        peakHeight = out.params['height'].value
+        laserPower = out.params['slope'].value * out.params['center'].value + out.params['intercept'].value
+        output = {'peakHeight': peakHeight, 'laserPower': laserPower}
+        return output
+        
