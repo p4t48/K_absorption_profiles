@@ -32,3 +32,4 @@ dataFilesLocation = "../results/20171218/*"
 
 res = AbsorptionResults(dataFilesLocation)
 res.PlotData()
+res.FitData()
