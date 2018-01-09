@@ -137,7 +137,7 @@ class KAbsProfiles:
         # Finding where to cut the data because of mode-hops or other
         jumps  = np.abs(sd.t_scan(data, window=10))
         jumps /= np.abs(jumps).max()
-        jumpLocations = np.where(jumps >= 0.8)[0] # 0.8 seems to properly discriminate mode-hops
+        jumpLocations = np.where(jumps >= 0.95)[0] # 0.8 seems to properly discriminate mode-hops
 
         # Cutting data from the last mode-hop on
         dataCut = data[jumpLocations[-1]+100:]
