@@ -21,4 +21,5 @@ an = KAbsProfiles(dataFiles[0], samplingRate, bits, channelLayout, channelRanges
 #an.PlotChannelData(1)
 #an.AbsorptionSignal(1,2,True)
 #print(an.AbsorptionParameters(1,2))
-print(an.FitAbsorptionProfile(1,2,1))
+#print(an.FitAbsorptionProfile(1,2,1))
+an.AnalyseNProfiles(5,2)

@@ -5,6 +5,8 @@ from scipy.signal import find_peaks_cwt
 import sys
 import step_detect as sd
 import lmfit as lf
+import pandas as pd
+import os
 
 
 class KAbsProfiles:
@@ -241,3 +243,27 @@ class KAbsProfiles:
         output = {'peakHeight': peakHeight, 'laserPower': laserPower}
         return output
         
+    def AnalyseNProfiles(self, N, channel):
+        """ Analyse the N first absorption profiles and return the relevant parameters. """
+
+        peakHeights, laserPowers = [], []
+
+        for i in range(1,N+1):
+            print("Analysing profile %i" % i)
+            result = self.FitAbsorptionProfile(i, channel)
+            peakHeights.append(result['peakHeight'])
+            laserPowers.append(result['laserPower'])
+
+        d = {"Peak Height (V)": peakHeights, "Laser Powers (V)": laserPowers}
+        df = pd.DataFrame(data=d)
+
+        folder = self.dataFile.split("/")[1]
+        fileName = self.dataFile.split("/")[2]
+        folderPath = "../results/%s" % folder
+        filePath = "../results/%s/%s.csv" % (folder, fileName)
+
+        if os.path.isdir(folderPath):
+            df.to_csv(filePath, index=False, sep='\t')
+        else:
+            os.mkdir(folderPath)
+            df.to_csv(filePath, index=False, sep='\t')
